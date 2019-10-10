@@ -1,514 +1,275 @@
-<?php
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en-US"> <!--<![endif]-->
+<head>
+<meta charset="utf-8" />
 
-/**
- * Archivarix Content Loader
- *
- * See README.txt for instructions with NGINX and Apache 2.x web servers
- *
- * PHP version 5.6 or newer
- * Required extensions: PDO_SQLITE
- * Recommended extensions: mbstring
- *
- * LICENSE:
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * @author     Archivarix Team <hello@archivarix.com>
- * @telegram   https://t.me/archivarixsupport
- * @copyright  2017-2019 Archivarix LLC
- * @license    https://www.gnu.org/licenses/gpl.html GNU GPLv3
- * @version    Release: 20190923
- * @link       https://archivarix.com
- */
+<!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame -->
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 
-@ini_set('display_errors', 0);
+<title>HPV Dating - Best Free HPV Dating Sites Reviews 2017</title>
 
-/**
- * Enable CMS mode to integrate with 3rd party CMS.
- * 0 = Disabled
- * 1 = Enabled
- * 2 = Enabled and homepage / path is passed to CMS
- * -1 = Return 404 error on missing urls
- */
-const ARCHIVARIX_CMS_MODE = 0;
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
 
-/**
- * Return 1px.png if image does not exist.
- */
-const ARCHIVARIX_FIX_MISSING_IMAGES = 1;
+<link rel="stylesheet" href="./wp-content/themes/hpvdating/style.css" type="text/css" media="screen" />
 
-/**
- * Return empty.css if css does not exist.
- */
-const ARCHIVARIX_FIX_MISSING_CSS = 1;
+<!-- All in One SEO Pack 2.3.5.1 by Michael Torbert of Semper Fi Web Design[482,505] -->
+<meta name="description" itemprop="description" content="FreeHPVdatingsites.com is an honest and unbiased review website where you can find the most up to date reviews of best free HPV dating sites in 2017." />
 
-/**
- * Return empty.js if javascript does not exist.
- */
-const ARCHIVARIX_FIX_MISSING_JS = 1;
+<meta name="keywords" itemprop="keywords" content="free, hpv dating, sites, genital warts, std dating, hpv dating site" />
 
-/**
- * Return empty.ico if favicon.ico does not exist.
- */
-const ARCHIVARIX_FIX_MISSING_ICO = 1;
-
-/**
- * Redirect missing html pages.
- */
-const ARCHIVARIX_REDIRECT_MISSING_HTML = '/';
-
-/**
- * Replace a custom key-phrase with a text file or php script.
- * You can do multiple custom replaces at once by adding more
- * array element.
- */
-const ARCHIVARIX_INCLUDE_CUSTOM = array(
-  [
-    'FILE' => '', // place a file to .content.xxxxxxxx folder and enter its filename here
-    'KEYPHRASE' => '', // an entry to look for
-    'LIMIT' => 1, // how many matches to replace; -1 for unlimited
-    'REGEX' => 0, // 1 to enable perl regex (important: escape ~ symbol); 0 - disabled
-    'POSITION' => 1, // -1 to place before KEYPHRASE, 0 to replace, 1 to place after KEYPHRASE
-  ],
-
-  /**
-   * Here are two most common predefined rules you may use.
-   * Just fill out FILE to activate and don't forget to put
-   * a file to .content.xxxxxxxx.
-   */
-
-  // before closing </head> rule, good for trackers and analytics
-  [
-    'FILE' => '',
-    'KEYPHRASE' => '</head>',
-    'LIMIT' => 1,
-    'REGEX' => 0,
-    'POSITION' => -1,
-  ],
-
-  // before closing </body> rule, good for counters or footer links
-  [
-    'FILE' => '',
-    'KEYPHRASE' => '</body>',
-    'LIMIT' => 1,
-    'REGEX' => 0,
-    'POSITION' => -1,
-  ],
-);
-
-/**
- * Custom source directory name. By default this script searches
- * for .content.xxxxxxxx folder. Set the different value if you
- * renamed that directory.
- */
-const ARCHIVARIX_CONTENT_PATH = '';
-
-/**
- * Set Cache-Control header for static files.
- * By default set to 0 and Etag is used for caching.
- */
-const ARCHIVARIX_CACHE_CONTROL_MAX_AGE = 2592000;
-
-/**
- * Website can run on another domain by default.
- * Set a custom domain if it is not recognized automatically or
- * you want to run your restore on a subdomain of original domain.
- */
-const ARCHIVARIX_CUSTOM_DOMAIN = '';
-
-/**
- * XML Sitemap path. Example: /sitemap.xml
- * Do not use query in sitemap path as it will be ignored
- */
-const ARCHIVARIX_SITEMAP_PATH = '';
-
-/**
- * Catch urls with a missing content and store them for
- * later review in Archivarix CMS. This feature is experimental.
- */
-const ARCHIVARIX_CATCH_MISSING = 0;
-
-/**
- *  Do not edit under this comment
- */
-$ARCHIVARIX_SETTINGS = array();
-
-/**
- * @return string
- *
- * @throws Exception
- */
-function getSourceRoot()
-{
-  if (ARCHIVARIX_CONTENT_PATH) {
-    $path = ARCHIVARIX_CONTENT_PATH;
-  } else {
-    $path = '';
-    $list = scandir(dirname(__FILE__));
-    foreach ($list as $item) {
-      if (preg_match('~^\.content\.[0-9a-zA-Z]+$~', $item) && is_dir(__DIR__ . DIRECTORY_SEPARATOR . $item)) {
-        $path = $item;
-        break;
-      }
-    }
-    if (!$path) {
-      header('X-Error-Description: Folder .content.xxxxxxxx not found');
-      throw new \Exception('Folder .content.xxxxxxxx not found');
-    }
-  }
-  $absolutePath = dirname(__FILE__) . DIRECTORY_SEPARATOR . $path;
-  if (!realpath($absolutePath)) {
-    header('X-Error-Description: Directory does not exist');
-    throw new \Exception(sprintf('Directory %s does not exist', $absolutePath));
-  }
-
-  return $absolutePath;
+<link rel="canonical" href="http://www.freehpvdatingsites.com/" />
+<!-- /all in one seo pack -->
+		<script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/72x72\/","ext":".png","source":{"concatemoji":"http:\/\/www.freehpvdatingsites.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.5.16"}};
+			!function(a,b,c){function d(a){var c,d,e,f=b.createElement("canvas"),g=f.getContext&&f.getContext("2d"),h=String.fromCharCode;if(!g||!g.fillText)return!1;switch(g.textBaseline="top",g.font="600 32px Arial",a){case"flag":return g.fillText(h(55356,56806,55356,56826),0,0),f.toDataURL().length>3e3;case"diversity":return g.fillText(h(55356,57221),0,0),c=g.getImageData(16,16,1,1).data,d=c[0]+","+c[1]+","+c[2]+","+c[3],g.fillText(h(55356,57221,55356,57343),0,0),c=g.getImageData(16,16,1,1).data,e=c[0]+","+c[1]+","+c[2]+","+c[3],d!==e;case"simple":return g.fillText(h(55357,56835),0,0),0!==g.getImageData(16,16,1,1).data[0];case"unicode8":return g.fillText(h(55356,57135),0,0),0!==g.getImageData(16,16,1,1).data[0]}return!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i;for(i=Array("simple","flag","unicode8","diversity"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script>
+		<style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
 }
+</style>
+<link rel='stylesheet' id='fancybox-stylesheet-css'  href='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/api/js/lightboxes/fancybox-1.3.4/jquery.fancybox-1.3.4.css?ver=4.5.16' type='text/css' media='all' />
+<link rel='stylesheet' id='color-scheme-stylesheet-css'  href='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/includes/css/color_schemes/default.css?ver=4.5.16' type='text/css' media='all' />
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-includes/js/jquery/jquery.js?ver=1.12.4'></script>
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1'></script>
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/api/js/html5/modernizr/modernizr.custom.97935.js?ver=4.5.16'></script>
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/api/js/html5/modernizr/pc_modernizr_custom.js?ver=4.5.16'></script>
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/api/js/misc/superfish-1.4.8/js/superfish.js?ver=4.5.16'></script>
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/includes/js/pc_superfish_init.js?ver=4.5.16'></script>
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/api/js/lightboxes/fancybox-1.3.4/jquery.fancybox-1.3.4.pack.js?ver=4.5.16'></script>
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/api/js/presscoders/custom-fancybox.js?ver=4.5.16'></script>
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/api/js/lightboxes/fancybox-1.3.4/jquery.easing-1.3.pack.js?ver=4.5.16'></script>
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/api/js/lightboxes/fancybox-1.3.4/jquery.mousewheel-3.0.4.pack.js?ver=4.5.16'></script>
+<link rel='https://api.w.org/' href='http://www.freehpvdatingsites.com/wp-json/' />
+</head>
 
-/**
- * @param string $dsn
- * @param string $url
- *
- * @return array|false
- */
-function getFileMetadata($dsn, $url)
-{
-  global $ARCHIVARIX_SETTINGS;
-  if (ARCHIVARIX_CUSTOM_DOMAIN) {
-    if (!empty($ARCHIVARIX_SETTINGS['www']) && $_SERVER['HTTP_HOST'] == ARCHIVARIX_CUSTOM_DOMAIN) {
-      $url = preg_replace('~' . preg_quote(ARCHIVARIX_CUSTOM_DOMAIN, '~') . '~', 'www.' . ARCHIVARIX_ORIGINAL_DOMAIN, $url, 1);
-    } else {
-      $url = preg_replace('~' . preg_quote(ARCHIVARIX_CUSTOM_DOMAIN, '~') . '~', ARCHIVARIX_ORIGINAL_DOMAIN, $url, 1);
-    }
-  } elseif (!preg_match('~^([-a-z0-9.]+\.)?' . preg_quote(ARCHIVARIX_ORIGINAL_DOMAIN, '~') . '$~i', $_SERVER['HTTP_HOST'])) {
-    if (!empty($ARCHIVARIX_SETTINGS['www'])) {
-      $url = preg_replace('~' . preg_quote($_SERVER['HTTP_HOST'], '~') . '~', 'www.' . ARCHIVARIX_ORIGINAL_DOMAIN, $url, 1);
-    } else {
-      $url = preg_replace('~' . preg_quote($_SERVER['HTTP_HOST'], '~') . '~', ARCHIVARIX_ORIGINAL_DOMAIN, $url, 1);
-    }
-  }
+<body class="home blog designfolio">
 
-  if (preg_match('~[?]+$~', $url)) {
-    $urlAlt = preg_replace('~[?]+$~', '', $url);
-  } elseif (preg_match('~[/]+$~', $url)) {
-    $urlAlt = preg_replace('~[/]+$~', '', $url);
-  } elseif (!parse_url($url, PHP_URL_QUERY) && !parse_url($url, PHP_URL_FRAGMENT)) {
-    $urlAlt = $url . '/';
-  } else {
-    $urlAlt = $url;
-  }
+<div id="body-container">
 
-  define('ARCHIVARIX_ORIGINAL_URL', $url);
+	
+	<div id="header-container">
+		<header class="cf">
+		
+					
+			<div id="logo-wrap">
+				<div class="logo"><a href="/">HPVdatingsites.net</a></div>
 
-  $pdo = new PDO($dsn);
-  $sth = $pdo->prepare('SELECT rowid, * FROM structure WHERE (url = :url COLLATE NOCASE OR url = :urlAlt COLLATE NOCASE) AND enabled = 1 ORDER BY filetime DESC LIMIT 1');
-  $sth->execute(['url' => $url, 'urlAlt' => $urlAlt]);
-  $metadata = $sth->fetch(PDO::FETCH_ASSOC);
+			</div><!-- #logo-wrap -->
+			
+			
+		 	  <nav class="primary-menu cf">
+		 	     <div class="menu-top-container"><ul id="menu-top" class="menu"><li id="menu-item-5" class="menu-item menu-item-type-custom menu-item-object-custom current-menu-item current_page_item menu-item-5"><a href="/">Home</a></li>
+<li id="menu-item-15" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-15"><a href="http://www.freehpvdatingsites.com/positivesingles-review/">Positive Singles</a></li>
+</ul></div>		 	  </nav>
 
-  return $metadata;
-}
+			  <nav class="primary-menu-dropdown">
+				 <select onchange="if (this.value) window.location.href=this.value"><option selected="selected">-- Main Menu --</option><option value="/">Home</option><option value="http://www.freehpvdatingsites.com/positivesingles-review/">Positive Singles</option></select>		 	  </nav>
 
-/**
- * @param array $metaData
- * @param string $sourcePath
- * @param string $url
- */
-function render(array $metaData, $sourcePath, $url = '')
-{
-  if (isset($metaData['redirect']) && $metaData['redirect']) {
-    header('Location: ' . $metaData['redirect']);
-    http_response_code(301);
-    exit(0);
-  }
-  $sourceFile = $sourcePath . DIRECTORY_SEPARATOR . $metaData['folder'] . DIRECTORY_SEPARATOR . $metaData['filename'];
-  if (!file_exists($sourceFile)) {
-    handle404($sourcePath, $url);
-    exit(0);
-  }
-  header('Content-Type:' . $metaData['mimetype']);
-  if (in_array($metaData['mimetype'], ['text/html', 'text/css', 'text/xml', 'application/javascript', 'application/x-javascript'])) {
-    header('Content-Type:' . $metaData['mimetype'] . '; charset=' . $metaData['charset'], true);
-  }
-  if (in_array($metaData['mimetype'], ['application/x-javascript', 'application/font-woff', 'application/javascript', 'image/gif', 'image/jpeg', 'image/png', 'image/svg+xml', 'image/tiff', 'image/webp', 'image/x-icon', 'image/x-ms-bmp', 'text/css', 'text/javascript'])) {
-    $etag = md5_file($sourceFile);
-    header('Etag: "' . $etag . '"');
-    if (ARCHIVARIX_CACHE_CONTROL_MAX_AGE) {
-      header('Cache-Control: public, max-age=' . ARCHIVARIX_CACHE_CONTROL_MAX_AGE);
-    }
-    if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag) {
-      http_response_code(304);
-      exit(0);
-    }
-  }
-  if (0 === strpos($metaData['mimetype'], 'text/html')) {
-    echo prepareContent($sourceFile, $sourcePath);
-  } else {
-    $fp = fopen($sourceFile, 'rb');
-    fpassthru($fp);
-    fclose($fp);
-  }
-}
+		 </header>
 
-/**
- * @param $file
- * @param $path
- *
- * @return bool|mixed|string
- */
-function prepareContent($file, $path)
-{
-  $content = file_get_contents($file);
+	</div><!-- #header-container -->
+<div class="hp_wel">
+  <div class="n_width">
+    <h1>Top Free HPV Dating Sites Reviews 2018 </h1>
+  </div>
+</div>
+<div id="container">
+    <div id="contentwrap" class="two-col-r">
+        <div class="page-left">
+      <section class="review clearfix">
+        <div class="product"> <img width="200" height="200" src="http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/images/positive-singles-homepage.jpg"></div>
+        <article>
+          <h2><em>#1</em> <a href="positivesingles-review">PositiveSingles.com</a></h2>
+          <p>PositiveSingles.com has been the undisputed leader in the STD dating segment, which has been helping people with herpes, HIV and Chlamydia; connect with like-minded people from all over the world. The website has a staggering membership base of over 1 million users with more than 120,000 conversations initiated per day. As a matter of fact, the sheer level of activity on this site makes it an instant favorite among people from across the globe. If you're looking to find love with STD, this is the site to explore....</p>
+        </article>
+        <footer>
+          <div class="left">
+            <div class="rating star_5_5"></div>
+          </div>
+          <div class="right">
+            <ul class="button-wrapper">
+              <li><a title="Visit PositiveSingles" rel="nofollow" class="left" href="https://www.positivesingles.com/i/VIP">Visit Website</a></li>
+              <li><a class="right" href="positivesingles-review">Full Review</a></li>
+            </ul>
+          </div>
+        </footer>
+        <div class="clear"></div>
+      </section>
+      <section class="review clearfix">
+        <div class="product"> <img width="200" height="200" src="http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/images/hope-homepage.jpg"></div>
+        <article>
+          <h2><em>#2</em> <a href="hope-review">HOPE</a></h2>
+          <p>Hope.dating is one of the latest entrants in the herpes dating segment, which according to us has the potential to become the next big thing in this segment of online dating. The website sports an easy to navigate user interface and is loaded with several out-of-the-box features that can give some of the segment leaders a run for their money. The website is absolutely free to join and use, which means you wouldn't have to opt for any subscriptions that would give you access to the advanced set of options...</p>
+        </article>
+        <footer>
+          <div class="left">
+            <div class="rating star_4_5"></div>
+          </div>
+          <div class="right">
+            <ul class="button-wrapper">
+              <li><a title="Visit Hope Dating" rel="nofollow" class="left" href="http://www.hope.dating">Visit Website</a></li>
+              <li><a class="right" href="hope-review">Full Review</a></li>
+            </ul>
+          </div>
+        </footer>
+        <div class="clear"></div>
+      </section>
+      <section class="review clearfix">
+        <div class="product"> <img width="200" height="200" src="http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/images/hpvdatingsite-homepage.jpg"></div>
+        <article>
+          <h2><em>#3</em> <a href="hpvdatingsite-review">HPVdatingsite.com</a></h2>
+          <p>Incepted in 2011, HpvDatingSite.com is one of the youngest sites in the HPV dating segment. Although you'd be able to become a member of this site absolutely free of charge, only a premium membership would allow you to make the most of all the features that this site brings to the table. It is worth noting that despite the fact that it came into existence in 2011, it has managed to grab the attention of both users as well as experts, resulting in its immense popularity in the west...</p>
+        </article>
+        <footer>
+          <div class="left">
+            <div class="rating star_5_4half"></div>
+          </div>
+          <div class="right">
+            <ul class="button-wrapper">
+              <li><a title="Visit HPVDatingSite.com" rel="nofollow" class="left" href="http://www.hpvdatingsite.com">Visit Website</a></li>
+              <li><a class="right" href="hpvdatingsite-review">Full Review</a></li>
+            </ul>
+          </div>
+        </footer>
+        <div class="clear"></div>
+      </section>
+      <section class="review clearfix">
+        <div class="product"> <img width="200" height="200" src="http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/images/hdate-homepage.jpg"></div>
+        <article>
+          <h2><em>#4</em> <a href="hdate-review">H-date.com</a></h2>
+          <p>H-date.com is the world's largest Herpes and HPV specific website that has a decent membership base of around 43,000 users from various parts of the world. The website strives to encourage people with these STDs get back to the dating scenario and eventually overcome the stigma attached with sexually transmitted infections. The website is absolutely free of charge but when it comes to features it can give some of the premium dating sites a run for their money...</p>
+        </article>
+        <footer>
+          <div class="left">
+            <div class="rating star_5_4half"></div>
+          </div>
+          <div class="right">
+            <ul class="button-wrapper">
+              <li><a title="Visit h-date.com" rel="nofollow" class="left" href="http://www.h-date.com">Visit Website</a></li>
+              <li><a class="right" href="hdate-review">Full Review</a></li>
+            </ul>
+          </div>
+        </footer>
+        <div class="clear"></div>
+      </section>
+      <section class="review clearfix">
+        <div class="product"> <img width="200" height="200" src="http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/images/std-friends-homepage.jpg"></div>
+        <article>
+          <h2><em>#5</em> <a href="stdfriends-review">STDfriends.com</a></h2>
+          <p>StdFriends.com in an online dating community that has been made exclusively for people affected with a sexually transmitted disease. The website caters to the needs of people affected with any sexually transmitted infection, giving them the opportunity to connect with like-minded people, meet them and eventually get into a relationship. The website is absolutely free to join with an option of upgrading, which would give them the option to access the complete set of features available...</p>
+        </article>
+        <footer>
+          <div class="left">
+            <div class="rating star_5_4"></div>
+          </div>
+          <div class="right">
+            <ul class="button-wrapper">
+              <li><a title="Visit stdfriends.com" rel="nofollow" class="left" href="http://www.stdfriends.com">Visit Website</a></li>
+              <li><a class="right" href="stdfriends-review">Full Review</a></li>
+            </ul>
+          </div>
+        </footer>
+        <div class="clear"></div>
+      </section>
+      <section class="review clearfix">
+        <div class="product"> <img width="200" height="200" src="http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/images/hwerks-homepage.jpg"></div>
+        <article>
+          <h2><em>#6</em> <a href="hwerks-review">HWerks.com</a></h2>
+          <p>Hwerks.com is another dating site that is dedicated to people affected with herpes and the Human Papillomavirus (HPV). Apart from dating, the website also specializes in educating people on sexually transmitted infections and how they could deal with it in an effective manner. Hwerks.com is an ideal destination for any person that is either affected with HSV or HPV, which could not only help them connect with the right audience but also learn more about their medical condition...</p>
+        </article>
+        <footer>
+          <div class="left">
+            <div class="rating star_5_4"></div>
+          </div>
+          <div class="right">
+            <ul class="button-wrapper">
+              <li><a title="Visit Hwerks.com" rel="nofollow" class="left" href="http://www.hwerks.com">Visit Website</a></li>
+              <li><a class="right" href="hwerks-review">Full Review</a></li>
+            </ul>
+          </div>
+        </footer>
+        <div class="clear"></div>
+      </section>
+      <section class="review clearfix">
+        <div class="product"> <img width="200" height="200" src="http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/images/hmates-homepage.jpg"></div>
+        <article>
+          <h2><em>#7</em> <a href="hmates-review">HMates.com</a></h2>
+          <p>Hmates.com is one of the best online dating communities exclusively for people with HSV and HPV. It is worth noting that this site is absolutely free of charge despite being loaded with tones of features that can help users seek support and connect with like-minded people from all over the world. Given the fact that only HSV and HPV singles are on this site, your chances of finding a match would increase drastically...</p>
+        </article>
+        <footer>
+          <div class="left">
+            <div class="rating star_5_3half"></div>
+          </div>
+          <div class="right">
+            <ul class="button-wrapper">
+              <li><a title="Visit Hmates.com" rel="nofollow" class="left" href="http://www.hmates.com">Visit Website</a></li>
+              <li><a class="right" href="hmates-review">Full Review</a></li>
+            </ul>
+          </div>
+        </footer>
+        <div class="clear"></div>
+      </section>
+      <section class="review clearfix">
+        <div class="product"> <img width="200" height="200" src="http://www.freehpvdatingsites.com/wp-content/themes/hpvdating/images/std-soulmates-homepage.jpg"></div>
+        <article>
+          <h2><em>#8</em> <a href="stdsoulmates-review">STDsoulmates.com</a></h2>
+          <p>As the name suggests, StdSoulMates.com strives to bring together people having a sexually transmitted infection for fun and dating, thereby giving them an opportunity to not only seek support from other like-minded people but also find a life companion. The website proves to be a feature-rich platform that is absolutely free to register and use. Regardless of whether you're looking for a honest relationship or just wish to get some information pertaining to STDs like HSV and HPV, this is the ideal platform to explore...</p>
+        </article>
+        <footer>
+          <div class="left">
+            <div class="rating star_5_3half"></div>
+          </div>
+          <div class="right">
+            <ul class="button-wrapper">
+              <li><a title="Visit stdsoulmates.com" rel="nofollow" class="left" href="http://www.stdsoulmates.com">Visit Website</a></li>
+              <li><a class="right" href="stdsoulmates-review">Full Review</a></li>
+            </ul>
+          </div>
+        </footer>
+        <div class="clear"></div>
+      </section>
+    </div>
+    
+	<div id="primary-sidebar" class="sidebar-container right" role="complementary">
 
-  foreach (ARCHIVARIX_INCLUDE_CUSTOM as $includeCustom) {
-    if ($includeCustom['FILE']) {
-      global $includeRule;
-      $includeRule = $includeCustom;
-      ob_start();
-      include $path . DIRECTORY_SEPARATOR . $includeCustom['FILE'];
-      $includedContent = preg_replace('~\$(\d)~', '\\\$$1', ob_get_clean());
+          
+		<div id="global-widget-area" class="widget-area"><div id="text-2" class="widget widget_text"><h3 class="widget-title">Top 5 HPV Dating Sites</h3>			<div class="textwidget"> <ul>
+<li>No.1<a href="http://www.hpvdatingsites.net/positivesingles-review"> PositiveSingles</a></li>
+<li>No.2<a href="http://www.hpvdatingsites.net/hope-review"> Hope</a></li>
+<li>No.3<a href="http://www.hpvdatingsites.net/hpvdatingsite-review"> HPVDatingSite</a></li>
+<li>No.4 <a href="http://www.hpvdatingsites.net/hdate-review"> H Date</a></li>
+<li>No.5<a href="http://www.hpvdatingsites.net/stdfriends-review"> STD Friends</a></li>
+           </ul></div>
+		</div></div><div id="primary-post-widget-area" class="widget-area"><div id="text-3" class="widget widget_text"><h3 class="widget-title">Dating Resources</h3>			<div class="textwidget"><ul>
+<li><a href="http://www.bbwdatesites.com" target="_blank">Free BBW Dating Sites</a></li>
+<li><a href="http://www.genitalwartsdating.net" target="_blank">Genital warts dating</a></li>
+<li><a href="https://www.herpes-datingsites.com" target="_blank">Herpes-datingsites.com</a></li>
+<li><a href="http://www.bikerdatingsite.net" target="_blank">Bikerdatingsite.net</a></li>
+<li><a href="http://www.freebikerdatingsites.com" target="_blank">Free biker dating sites</a></li>
+<li><a href="http://www.freeherpesdatingsites.net/" target="_blank">Free herpes dating sites</a></li>
+</ul></div>
+		</div></div>
+	</div><!-- .sidebar-container -->  </div>
+  <!-- #contentwrap -->
+</div>
+<!-- #container -->
 
-      if ($includeCustom['REGEX']) {
-        $includeCustom['KEYPHRASE'] = str_replace('~', '\~', $includeCustom['KEYPHRASE']);
-      } else {
-        $includeCustom['KEYPHRASE'] = preg_quote($includeCustom['KEYPHRASE'], '~');
-      }
-
-      switch ($includeCustom['POSITION']) {
-        case -1 :
-          $includedContent = $includedContent . '$0';
-          break;
-        case 1 :
-          $includedContent = '$0' . $includedContent;
-          break;
-      }
-
-      $content = preg_replace('~' . $includeCustom['KEYPHRASE'] . '~is', $includedContent, $content, $includeCustom['LIMIT']);
-    }
-  }
-  if (function_exists('mb_strlen')) {
-    header('Content-Length: ' . mb_strlen($content, '8bit'), true);
-  }
-
-  return $content;
-}
-
-/**
- * @param string $sourcePath
- * @param string $url
- */
-function handle404($sourcePath, $url)
-{
-  if (ARCHIVARIX_CATCH_MISSING) {
-    global $dsn;
-    $url = ARCHIVARIX_ORIGINAL_URL;
-
-    $pdo = new PDO($dsn);
-    $pdo->exec('CREATE TABLE IF NOT EXISTS missing (url TEXT PRIMARY KEY, status INTEGER, ignore INTEGER)');
-
-    $stmt = $pdo->prepare('INSERT OR IGNORE INTO missing VALUES(:url, 0, 0)');
-    $stmt->bindParam(':url', $url, PDO::PARAM_STR);
-    $stmt->execute();
-  }
-
-  $fileType = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
-  switch (true) {
-    case (in_array($fileType, ['jpg', 'jpeg', 'gif', 'png', 'bmp']) && ARCHIVARIX_FIX_MISSING_IMAGES):
-      $fileName = $sourcePath . DIRECTORY_SEPARATOR . '1px.png';
-      $size = filesize($fileName);
-      render(['folder' => '', 'filename' => '1px.png', 'mimetype' => 'image/png', 'charset' => 'binary', 'filesize' => $size], $sourcePath);
-      break;
-    case ($fileType === 'ico' && ARCHIVARIX_FIX_MISSING_ICO):
-      $fileName = $sourcePath . DIRECTORY_SEPARATOR . 'empty.ico';
-      $size = filesize($fileName);
-      render(['folder' => '', 'filename' => 'empty.ico', 'mimetype' => 'image/x-icon', 'charset' => 'binary', 'filesize' => $size], $sourcePath);
-      break;
-    case($fileType === 'css' && ARCHIVARIX_FIX_MISSING_CSS):
-      $fileName = $sourcePath . DIRECTORY_SEPARATOR . 'empty.css';
-      $size = filesize($fileName);
-      render(['folder' => '', 'filename' => 'empty.css', 'mimetype' => 'text/css', 'charset' => 'utf-8', 'filesize' => $size], $sourcePath);
-      break;
-    case ($fileType === 'js' && ARCHIVARIX_FIX_MISSING_JS):
-      $fileName = $sourcePath . DIRECTORY_SEPARATOR . 'empty.js';
-      $size = filesize($fileName);
-      render(['folder' => '', 'filename' => 'empty.js', 'mimetype' => 'application/javascript', 'charset' => 'utf-8', 'filesize' => $size], $sourcePath);
-      break;
-    case (ARCHIVARIX_REDIRECT_MISSING_HTML && ARCHIVARIX_REDIRECT_MISSING_HTML !== $_SERVER['REQUEST_URI']):
-      header('Location: ' . ARCHIVARIX_REDIRECT_MISSING_HTML);
-      http_response_code(301);
-      exit(0);
-      break;
-    default:
-      http_response_code(404);
-  }
-}
-
-/**
- * @param string $dsn
- *
- * @return bool
- */
-function checkRedirects($dsn)
-{
-  global $ARCHIVARIX_SETTINGS;
-  $pdo = new PDO($dsn);
-  $exit = false;
-  $res = $pdo->query('SELECT param, value FROM settings');
-  if ($res) {
-    $settings = $res->fetchAll(PDO::FETCH_KEY_PAIR);
-    define('ARCHIVARIX_ORIGINAL_DOMAIN', $settings['domain']);
-    $ARCHIVARIX_SETTINGS = $settings;
-    if (!empty($settings['https']) && (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] == 'off')) {
-      $location = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-      header('Location: ' . $location);
-      http_response_code(301);
-      exit(0);
-    }
-    if (!empty($settings['non-www']) && 0 === strpos($_SERVER['HTTP_HOST'], 'www.')) {
-      $host = preg_replace('~^www\.~', '', $_SERVER['HTTP_HOST']);
-      $location = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http') . '://' . $host . $_SERVER['REQUEST_URI'];
-      header('Location: ' . $location);
-      http_response_code(301);
-      exit(0);
-    }
-    if (!empty($settings['www']) && $_SERVER['HTTP_HOST'] == $settings['domain']) {
-      $location = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http') . '://www.' . $settings['domain'] . $_SERVER['REQUEST_URI'];
-      header('Location: ' . $location);
-      http_response_code(301);
-      exit(0);
-    }
-  } else {
-    header('X-Error-Description: Write permission problem.');
-    throw new \Exception('Write permission problem. Make sure your files are under a correct user/group and avoid using PHP in a module mode.');
-  }
-
-  return $exit;
-}
-
-/**
- * @param string $dsn
- */
-function renderSitemapXML($dsn)
-{
-  if (ARCHIVARIX_CUSTOM_DOMAIN) {
-    $domain = preg_replace('~' . preg_quote(ARCHIVARIX_CUSTOM_DOMAIN, '~') . '$~', '', $_SERVER['HTTP_HOST']) . ARCHIVARIX_ORIGINAL_DOMAIN;
-  } else {
-    $domain = ARCHIVARIX_ORIGINAL_DOMAIN;
-  }
-
-  $pagesLimit = 50000;
-  $pageProtocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http';
-
-  $pdo = new PDO($dsn);
-  $res = $pdo->prepare('SELECT count(*) FROM "structure" WHERE hostname = :domain AND mimetype = "text/html" AND enabled = 1 AND redirect = ""');
-  $res->execute(['domain' => $domain]);
-  $pagesCount = $res->fetchColumn();
-
-  if (!$pagesCount) {
-    exit(0);
-  }
-
-  if ($pagesCount > $pagesLimit && empty($_GET['id'])) {
-    header('Content-type: text/xml; charset=utf-8');
-    echo '<?xml version="1.0" encoding="UTF-8"?' . '><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-    for ($pageNum = 1; $pageNum <= ceil($pagesCount / $pagesLimit); $pageNum++) {
-      echo '<sitemap><loc>' . htmlspecialchars("$pageProtocol://$_SERVER[HTTP_HOST]" . ARCHIVARIX_SITEMAP_PATH . "?id=$pageNum", ENT_XML1, 'UTF-8') . '</loc></sitemap>';
-    }
-    echo '</sitemapindex>';
-    exit(0);
-  }
-
-  if (!empty($_GET['id']) && !ctype_digit($_GET['id'])) {
-    http_response_code(404);
-    exit(0);
-  }
-
-  if (!empty($_GET['id'])) {
-    $pageId = $_GET['id'];
-    if ($pageId < 1 || $pageId > ceil($pagesCount / $pagesLimit)) {
-      http_response_code(404);
-      exit(0);
-    }
-    $pagesOffset = ($pageId - 1) * $pagesLimit;
-    $res = $pdo->prepare('SELECT * FROM "structure" WHERE hostname = :domain AND mimetype = "text/html" AND enabled = 1 AND redirect = "" ORDER BY request_uri LIMIT :limit OFFSET :offset');
-    $res->execute(['domain' => $domain, 'limit' => $pagesLimit, 'offset' => $pagesOffset]);
-    $pages = $res->fetchAll(PDO::FETCH_ASSOC);
-  }
-
-  if (empty($_GET['id'])) {
-    $res = $pdo->prepare('SELECT * FROM "structure" WHERE hostname = :domain AND mimetype = "text/html" AND enabled = 1 AND redirect = "" ORDER BY request_uri');
-    $res->execute(['domain' => $domain]);
-    $pages = $res->fetchAll(PDO::FETCH_ASSOC);
-  }
-
-  header('Content-type: text/xml; charset=utf-8');
-  echo '<?xml version="1.0" encoding="UTF-8"?' . '><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-  foreach ($pages as $page) {
-    echo '<url><loc>' . htmlspecialchars("$pageProtocol://$_SERVER[HTTP_HOST]$page[request_uri]", ENT_XML1, 'UTF-8') . '</loc></url>';
-  }
-  echo '</urlset>';
-}
-
-try {
-  if (ARCHIVARIX_CMS_MODE == 2 && $_SERVER['REQUEST_URI'] == '/') {
-    return;
-  }
-
-  if (!in_array('sqlite', PDO::getAvailableDrivers())) {
-    header('X-Error-Description: PDO_SQLITE driver is not loaded');
-    throw new \Exception('PDO_SQLITE driver is not loaded.');
-  }
-  if ('cli' === php_sapi_name()) {
-    echo "OK" . PHP_EOL;
-    exit(0);
-  }
-
-  $url = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http') . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-  $sourcePath = getSourceRoot();
-
-  $dbm = new PDO('sqlite::memory:');
-  if (version_compare($dbm->query('SELECT sqlite_version()')->fetch()[0], '3.7.0') >= 0) {
-    $dsn = sprintf('sqlite:%s%s%s', $sourcePath, DIRECTORY_SEPARATOR, 'structure.db');
-  } else {
-    $dsn = sprintf('sqlite:%s%s%s', $sourcePath, DIRECTORY_SEPARATOR, 'structure.legacy.db');
-  }
-  $dbm = null;
-
-  if (checkRedirects($dsn)) {
-    exit(0);
-  }
-
-  if (ARCHIVARIX_SITEMAP_PATH && ARCHIVARIX_SITEMAP_PATH === parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)) {
-    renderSitemapXML($dsn);
-    exit(0);
-  }
-
-  $metaData = getFileMetadata($dsn, $url);
-  if ($metaData) {
-    render($metaData, $sourcePath, $url);
-    if (ARCHIVARIX_CMS_MODE > 0) {
-      exit(0);
-    }
-  } else {
-    if (ARCHIVARIX_CMS_MODE == -1) {
-      http_response_code(404);
-      exit(0);
-    }
-    if (ARCHIVARIX_CMS_MODE == 0) {
-      handle404($sourcePath, $url);
-    }
-  }
-  if (!ARCHIVARIX_CMS_MODE) {
-    exit(0);
-  }
-} catch (\Exception $e) {
-  http_response_code(503);
-  error_log($e);
-}
+<footer> Copyright 2017 - <a href="/">FreeHPVDatingSites.com</a> - All Rights Reserved </footer>
+</div>
+<!-- #body-container -->
+<script type='text/javascript' src='http://www.freehpvdatingsites.com/wp-includes/js/wp-embed.min.js?ver=4.5.16'></script>
+</body></html>
