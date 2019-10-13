@@ -2,6 +2,12 @@ User-agent: Googlebot
 Disallow:  /info/
 Disallow:  /search/
 
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
 User-agent: Mediapartners-Google
 Disallow:  /info/
 Disallow:  /search/
